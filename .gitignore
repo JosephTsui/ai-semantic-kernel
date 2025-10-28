@@ -56,3 +56,4 @@ packages/
 # Application settings (may contain secrets)
 appsettings.Development.json
 appsettings.Local.json
+*.secret.json
