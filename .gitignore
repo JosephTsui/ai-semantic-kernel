@@ -30,3 +30,29 @@
 *.exe
 *.out
 *.app
+
+# .NET Core build outputs
+bin/
+obj/
+*/bin/
+*/obj/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio files
+.vs/
+*.vscode/
+
+# NuGet packages
+packages/
+*.nupkg
+*.snupkg
+
+# Application settings (may contain secrets)
+appsettings.Development.json
+appsettings.Local.json
