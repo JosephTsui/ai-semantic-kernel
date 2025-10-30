@@ -21,9 +21,20 @@ var kernel = builder.Build();
 var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
 
 // Add the plugin to the kernel
-
+kernel.Plugins.AddFromType<FlightBookingPlugin>("FlightBookingPlugin");
 
 // Configure function choice behavior
+// OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
+// {
+//     FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
+// };
+KernelFunction searchFlights = kernel.Plugins.GetFunction("FlightBookingPlugin", "search_flights");
+
+PromptExecutionSettings openAIPromptExecutionSettings = new()
+{
+    FunctionChoiceBehavior = FunctionChoiceBehavior.Required(functions: [searchFlights])
+};
+
 
 
 var history = new ChatHistory();
@@ -35,13 +46,15 @@ GetInput();
 await GetReply();
 
 
-void GetInput() {
+void GetInput()
+{
     Console.Write("User: ");
     string input = Console.ReadLine()!;
     history.AddUserMessage(input);
 }
 
-async Task GetReply() {
+async Task GetReply()
+{
     ChatMessageContent reply = await chatCompletionService.GetChatMessageContentAsync(
         history,
         executionSettings: openAIPromptExecutionSettings,
@@ -51,7 +64,8 @@ async Task GetReply() {
     history.AddAssistantMessage(reply.ToString());
 }
 
-void AddUserMessage(string msg) {
+void AddUserMessage(string msg)
+{
     Console.WriteLine("User: " + msg);
     history.AddUserMessage(msg);
 }

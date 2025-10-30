@@ -5,7 +5,7 @@
     "Destination": "Tokyo",
     "DepartureDate": "2025-01-19",
     "Price": 1200,
-    "IsBooked": false
+    "IsBooked": true
   },
   {
     "Id": 2,

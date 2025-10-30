@@ -14,11 +14,45 @@ public class FlightBookingPlugin
     }
 
     // Create a plugin function with kernel function attributes
+    [KernelFunction("search_flights")]
+    [Description("Searches for available flights based on destination and departure date in the format YYYY-MM-DD")]
+    [return: Description("A list of available flights")]
 
+    public List<FlightModel> SearchFlights(string destination, string departureDate)
+    {
+        // Filter flights based on destination
+        return flights.Where(flights =>
+            flights.Destination.Equals(destination, StringComparison.OrdinalIgnoreCase) &&
+            flights.DepartureDate.Equals(departureDate)).ToList();
+    }
 
 
     // Create a kernel function to book flights
+    [KernelFunction("book_flight")]
+    [Description("Books a flight based on the flight ID provided")]
+    [return: Description("Booking confirmation message")]
+    public string BookFlight(int flightId)
+    {
+        // Add Logic to book the flight
+        var flight = flights.FirstOrDefault(f => f.Id == flightId);
+        if (flight == null)
+        {
+            return "Flight not found. Please provide a valid flight ID.";
+        }
 
+        if (flight.IsBooked)
+        {
+            return $"You've already booked this flight.";
+        }
+
+        flight.IsBooked = true;
+        SaveFlightsToFile();
+
+        return @$"Flight booked successfully! AirLine: {flight.Airline},
+        Destination: {flight.Destination},
+        Departure: {flight.DepartureDate},
+        Price: ${flight.Price}.";
+    }
 
 
     private void SaveFlightsToFile()
