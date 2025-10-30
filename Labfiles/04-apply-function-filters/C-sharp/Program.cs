@@ -16,7 +16,7 @@ string deploymentName = config["DEPLOYMENT_NAME"]!;
 // Create a kernel with Azure OpenAI chat completion
 var builder = Kernel.CreateBuilder();
 builder.AddAzureOpenAIChatCompletion(deploymentName, endpoint, apiKey);
-OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new() 
+OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
 {
     FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
 };
@@ -25,7 +25,7 @@ var kernel = builder.Build();
 kernel.Plugins.AddFromType<FlightBookingPlugin>("FlightBookingPlugin");
 
 // Add the permission filter to the kernel
-
+kernel.FunctionInvocationFilters.Add(new PermissionFilter());
 
 var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
 var history = new ChatHistory();
@@ -36,13 +36,15 @@ await GetReply();
 GetInput();
 await GetReply();
 
-void GetInput() {
+void GetInput()
+{
     Console.Write("User: ");
     string input = Console.ReadLine()!;
     history.AddUserMessage(input);
 }
 
-async Task GetReply() {
+async Task GetReply()
+{
     ChatMessageContent reply = await chatCompletionService.GetChatMessageContentAsync(
         history,
         executionSettings: openAIPromptExecutionSettings,
@@ -59,11 +61,18 @@ void AddUserMessage(string msg)
 }
 
 // Create the function filer class
-public class PermissionFilter
+public class PermissionFilter : IFunctionInvocationFilter
 {
-
     // Implement the function invocation method
-    
+    public async Task OnFunctionInvocationAsync(FunctionInvocationContext context, Func<FunctionInvocationContext, Task> next)
+    {
+        if (!HasUserPermission(context.Function.PluginName ?? string.Empty, context.Function.Name))
+        {
+            context.Result = new FunctionResult(context.Result, "The operation was not approved by the user");
+        }
+
+        await next(context);
+    }
 
     private Boolean HasUserPermission(string pluginName, string functionName)
     {
