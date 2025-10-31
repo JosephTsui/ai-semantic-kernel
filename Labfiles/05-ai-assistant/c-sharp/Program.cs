@@ -46,12 +46,31 @@ var deployStageFunction = kernel.CreateFunctionFromPrompt(
 kernel.Plugins.AddFromFunctions("DeployStageEnvironment", [deployStageFunction]);
 
 // Create a handlebars prompt
+string hbprompt = """
+    <message role="system">Instructions: Before creating a new branch for user, request the new branch name and base barnch name</message>
+    <message role="user">Can you create a new branch</message>
+    <message role="assistant">Sure, what would you like to name your branch? And which branch would you like to use?</message>
+    <message role="user"></message>
+    <message role="assistant">
+    """;
 
 // Create the prompt template config using handlebars format
+var templateFactory = new HandlebarsPromptTemplateFactory();
+var promptTemplateConfig = new PromptTemplateConfig()
+{
+    Template = hbprompt,
+    TemplateFormat = "handlebars",
+    Name = "CreateBranch"
+};
 
 // Create a plugin function from the prompt
+var promptFunction = kernel.CreateFunctionFromPrompt(
+    promptTemplateConfig, templateFactory);
+var branchPlugin = kernel.CreatePluginFromFunctions("BranchPlugin", [promptFunction]);
+kernel.Plugins.Add(branchPlugin);
 
 // Add filters to the kernel
+kernel.FunctionInvocationFilters.Add(new PermissionFilter());
 
 Console.WriteLine("Press enter to exit");
 Console.WriteLine("Assistant: How may I help you?");
@@ -124,3 +143,27 @@ class DevopsPlugin
 }
 
 // Create a function filter
+class PermissionFilter : IFunctionInvocationFilter
+{
+    public async Task OnFunctionInvocationAsync(FunctionInvocationContext context, Func<FunctionInvocationContext, Task> next)
+    {
+        // Check the plugin and function names
+        if ((context.Function.PluginName == "DevopsPlugin" &&
+            context.Function.Name == "DeployToProd"))
+        {
+            // Request user approval
+            Console.WriteLine("System Message: The assistant requires an approval to complete this operation. Do you approve (Y/N)");
+            Console.Write("User: ");
+            string shouldProceed = Console.ReadLine()!;
+
+            // Proceed if approval
+            if (shouldProceed != "Y")
+            {
+                context.Result = new FunctionResult(context.Result, "The operation was not approved by the user");
+                return;
+            }
+        }
+
+        await next(context);
+    }
+}
